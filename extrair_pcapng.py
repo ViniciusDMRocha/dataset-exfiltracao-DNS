@@ -19,7 +19,7 @@ os.makedirs(pasta_csv, exist_ok=True)
 
 # LISTA DE ATRIBUTOS
 FEATURES_FIXAS = [
-    # Identificadores (remover antes do treino, mas uteis agora)
+    # Identificadores
     "src_ip", "dst_ip", "src_port", "dst_port", "protocol", 
     "start_time", "end_time", 
     
@@ -42,24 +42,19 @@ def calcular_entropia(texto):
     return -sum(p * math.log2(p) for p in probabilidades)
 
 def extrair_dados_padronizados(flow):
-    # 1. Cria um dicionário base com TUDO zerado ou vazio
     dados = {k: None for k in FEATURES_FIXAS}
     
-    # 2. Preenche com o que o nfstream encontrou
     for atributo in dir(flow):
-        if atributo in dados: # Só pega se estiver na nossa Lista Mestra
+        if atributo in dados:
             val = getattr(flow, atributo)
-            # Tratamento de datas
-            if atributo == "bidirectional_first_seen_ms": # mapear se necessário
+            if atributo == "bidirectional_first_seen_ms":
                  pass 
             else:
                 dados[atributo] = val
 
-    # Ajuste manual de datas (se os nomes diferem da lista mestra)
     dados["start_time"] = datetime.fromtimestamp(flow.bidirectional_first_seen_ms / 1000)
     dados["end_time"] = datetime.fromtimestamp(flow.bidirectional_last_seen_ms / 1000)
 
-    # 3. Engenharia de Features (Sempre roda)
     domain = getattr(flow, "requested_server_name", "")
     if domain is None: domain = ""
     
@@ -73,7 +68,7 @@ def extrair_dados_padronizados(flow):
 
 chunk_size = 50000 
 
-print("⚠️  ATENÇÃO: Apagando CSVs antigos para evitar inconsistência...")
+print("Apagando CSVs antigos para evitar inconsistência")
 for f in os.listdir(pasta_csv):
     if f.endswith(".csv"):
         os.remove(os.path.join(pasta_csv, f))
@@ -95,14 +90,11 @@ for nome_arquivo in os.listdir(pasta_pcap):
         primeira_escrita = True
         
         for i, flow in enumerate(streamer, start=1):
-            # Usamos a nova função padronizada
             buffer.append(extrair_dados_padronizados(flow))
 
             if i % chunk_size == 0:
                 df = pd.DataFrame(buffer)
-                # Garante a ordem das colunas
                 df = df[FEATURES_FIXAS] 
-                # Salva
                 df.to_csv(caminho_csv, mode="a", header=primeira_escrita, index=False)
                 primeira_escrita = False
                 buffer = []
