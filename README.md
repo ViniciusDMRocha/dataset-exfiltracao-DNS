@@ -1,92 +1,57 @@
+# UFU-Exfiltração-DNS: Detecção de Exfiltração de Dados
 
-# Documentação da Extração de Dados com NFStream
+Este repositório contém o ecossistema de desenvolvimento utilizado para a construção e estruturação de um conjunto de dados focado na identificação de exfiltração de dados via protocolo DNS (Do53). O projeto utiliza o framework **NFStream** para a extração de fluxos e técnicas de **Engenharia de Atributos** para a detecção de anomalias.
 
-## 1. Visão Geral
-Este documento descreve o processo de extração de fluxos de tráfego de rede a partir de arquivos `.pcapng` utilizando a biblioteca **NFStream**. O objetivo foi transformar capturas de tráfego em conjuntos de dados tabulares para análise de tráfego benigno e potencialmente malicioso.
+## Estrutura do Repositório
 
----
+* **`pcap_benigno/`**: Diretório contendo as capturas brutas de tráfego legítimo.
+* **`pcap_exfiltracao/`**: Diretório contendo as capturas brutas de cenários de ataque.
+* **`imagens_aed/`**: Gráficos e visualizações gerados durante a Análise Exploratória de Dados.
+* **`dataset_final.csv`**: Conjunto de dados consolidado e pronto para uso em modelos de ML.
+* **Scripts Python (`.py`)**: Roteiros de automação para o pipeline de dados (raiz do projeto).
 
-## 2. Ferramenta Utilizada
-- **NFStream**: Framework para extração de features de tráfego de rede a partir de capturas (`pcap`, `pcapng`) ou interfaces em tempo real.
-- Vantagens:
-  - Extração padronizada de múltiplas features.
-  - Suporte a classificação de aplicações e protocolos.
-  - Integração direta com **pandas** para análise e exportação.
+## Ambiente de Desenvolvimento e Instalação
 
----
+O projeto foi executado em ambiente **WSL2 (Windows Subsystem for Linux)**. Para reproduzir o ambiente e instalar todas as dependências necessárias, execute o seguinte comando:
 
-## 3. Fluxo de Extração
-
-### 3.1 Script Base Utilizado
-```python
-import pandas as pd
-from datetime import datetime
-from nfstream import NFStreamer
-
-streamer = NFStreamer(source="/mnt/c/Faculdade/TCC/pcap/Dia10_DoH_Benigno.pcapng")
-
-df = pd.DataFrame([{
-    "src_ip": flow.src_ip,
-    "dst_ip": flow.dst_ip,
-    "src_port": flow.src_port,
-    "dst_port": flow.dst_port,
-    "protocol": flow.protocol,
-    "application_name": flow.application_name,
-    "requested_server_name": flow.requested_server_name,
-    "bidirectional_bytes": flow.bidirectional_bytes,
-    "bidirectional_packets": flow.bidirectional_packets,
-    "src2dst_bytes": flow.src2dst_bytes,
-    "dst2src_bytes": flow.dst2src_bytes,
-    "bidirectional_duration_ms": flow.bidirectional_duration_ms,
-    "start_time": datetime.fromtimestamp(flow.bidirectional_first_seen_ms / 1000),
-    "end_time": datetime.fromtimestamp(flow.bidirectional_last_seen_ms / 1000)
-} for flow in streamer])
-
-df.to_csv("/mnt/c/Faculdade/TCC/csv/Dia10_DoH_Benigno.csv", index=False)
+```bash
+pip install nfstream pandas matplotlib seaborn scikit-learn
 ```
 
-### 3.2 Detalhes da Extração
-- Fonte: Arquivos `.pcapng` capturados previamente.
-- Saída: Arquivos `.csv` contendo os fluxos e atributos escolhidos.
+Requisitos Técnicos:
+
+* **SO:** Windows 11 + Ubuntu 22.04 LTS (WSL2)
+* **Linguagem:** Python 3.10.12
+* **Principais Bibliotecas:**
+    * `nfstream`: Extração de fluxos bidirecionais e Inspeção Profunda de Pacotes (DPI).
+    * `pandas`: Manipulação de dados, filtragem e rotulagem.
+    * `matplotlib` / `seaborn`: Geração de gráficos para análise exploratória.
+
+## Como Reproduzir
+
+Os arquivos PCAPNG originais necessários para alimentar as pastas pcap_benigno/ e pcap_exfiltracao/ estão disponíveis no link abaixo:
+
+Google Drive: [Pasta de Dados Brutos](https://drive.google.com/drive/folders/1mhF6CBvu1TFPZRc24OVpSHZ3849n8I9I?usp=drive_link)
+
+Nota: Os scripts dependem que os arquivos sejam baixados e mantidos com os nomes originais disponibilizados no link acima.
+
+O funcionamento do código segue uma ordem lógica de transformação dos dados:
+
+1. **Extração (`extrair_pcapng.py`)**: Converte arquivos PCAPNG em fluxos estruturados via NFStream, calculando métricas de entropia, comprimento de query e densidade numérica.
+2. **Subamostragem (`gerador_amostra_benigna.py`)**: Realiza o *undersampling* de um dos arquivos CSV de tráfego benigno (previamente extraídos). O usuário deve selecionar um dos arquivos da base bruta para processamento, do qual o script extrairá uma amostra aleatória de 100.000 registros para consolidar o dataset final com realismo estatístico.
+3. **Rotulagem e Limpeza (`rotulagem_csv.py`)**: Atribui rótulos binários (0 para Benigno, 1 para Exfiltração) e trata valores ausentes ou ruidosos. O script cria automaticamente uma pasta chamada `arquivos_rotulados` para salvar cada arquivo processado individualmente antes de consolidar o `dataset_final.csv`.
+4. **Análise Exploratória (`analise_exploratoria.py`)**: Realiza a leitura do `dataset_final.csv`, gera métricas estatísticas e salva as visualizações na pasta `imagens_aed/`.
+
+## Disponibilidade do Dataset Final
+
+O principal produto deste trabalho — o conjunto de dados consolidado — está **publicamente disponível e hospedado no Mendeley Data**. Esta disponibilização visa facilitar a reprodutibilidade científica e oferecer uma base robusta para o treinamento de novos modelos de detecção de exfiltração via DNS.
+
+* **Acesse aqui:** [Mendeley Data - UFU-Exfiltração-DNS](https://doi.org/10.17632/v2cy9y58t7.3)
+* **DOI Oficial:** `10.17632/v2cy9y58t7.3`
+* **Volume:** ~110.000 instâncias prontas para uso.
+* **Proporção de Classes:** 10:1 (Benigno vs. Exfiltração), ideal para testes de resiliência a desbalanceamento.
+
+Ao utilizar este dataset em pesquisas acadêmicas, solicita-se a citação via DOI conforme as diretrizes da plataforma.
 
 ---
-
-## 4. Features Selecionadas
-As seguintes features foram extraídas do objeto `flow` do NFStream:
-
-- `src_ip`, `dst_ip`
-- `src_port`, `dst_port`
-- `protocol`
-- `application_name`
-- `requested_server_name`
-- `bidirectional_bytes`
-- `bidirectional_packets`
-- `src2dst_bytes`
-- `dst2src_bytes`
-- `bidirectional_duration_ms`
-- `start_time` (calculado a partir de `bidirectional_first_seen_ms`)
-- `end_time` (calculado a partir de `bidirectional_last_seen_ms`)
-
-Essas features permitem analisar tráfego DNS/DoH em nível de fluxo, verificando intensidade, duração e características da comunicação.
-
----
-
-## 5. Rotulagem
-- Inicialmente, a rotulagem foi feita a partir do **contexto da captura** (ex.: `DiaX_DoH_Benigno` → tráfego benigno).
-- Posteriormente, foi aplicado filtro por **porta/protocolo**:
-  - Ex.: Se `dst_port == 53` (DNS) ou `dst_port == 443` (DoH), rotulado como *benigno*.
-  - Caso contrário, rotulado como *outlier*.
-
----
-
-## 6. Filtragem dos Dados
-Após a geração dos CSVs:
-- Foram removidos fluxos não relacionados a DNS/DoH.
-- Foi aplicado filtro pela coluna `label` para separar tráfego **benigno** de **outliers**.
-
----
-
-## 7. Considerações Finais
-- O NFStream gera fluxos agregados, portanto pode haver divergência no número de fluxos em comparação com outras ferramentas (ex.: **Argus**).
-- Essa diferença é esperada devido às estratégias internas de agregação e expiração de fluxos.
-- Para consistência, todo o pipeline foi padronizado com NFStream.
+*Este projeto foi desenvolvido como parte do Trabalho de Conclusão de Curso na Faculdade de Computação (FACOM) - UFU.*

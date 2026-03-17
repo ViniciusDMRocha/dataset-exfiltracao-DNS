@@ -1,10 +1,17 @@
 import pandas as pd
 import os
 
-ARQUIVO_ENTRADA = "/mnt/c/Faculdade/TCC/csv_benigno/Dia7_Do53_benigno.csv"
-ARQUIVO_SAIDA = "/mnt/c/Faculdade/TCC/csv_benigno/Amostra_Do53_Benigno.csv"
+diretorio_base = os.path.dirname(os.path.abspath(__file__))
+PASTA_ENTRADA = os.path.join(diretorio_base, "csv_benigno")
+
+# Nome do arquivo que você deseja processar
+NOME_ARQUIVO_ALVO = "Dia7_Do53_benigno.csv"
+
+ARQUIVO_ENTRADA = os.path.join(PASTA_ENTRADA, NOME_ARQUIVO_ALVO)
+ARQUIVO_SAIDA = os.path.join(PASTA_ENTRADA, "Amostra_Do53_Benigno.csv")
+
 QTD_AMOSTRAS = 100000
-FILTRAR_LABEL_ZERO = True 
+FILTRAR_LABEL_ZERO = True
 
 def criar_amostra():
     if not os.path.exists(ARQUIVO_ENTRADA):

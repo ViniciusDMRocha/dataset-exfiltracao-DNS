@@ -3,15 +3,14 @@ import os
 import glob
 import gc
 
-BASE_PATH = "/mnt/c/Faculdade/TCC"
-PATH_BENIGNO = os.path.join(BASE_PATH, "csv_benigno_amostra")
-PATH_MALIGNO = os.path.join(BASE_PATH, "csv_exfiltracao")
+diretorio_base = os.path.dirname(os.path.abspath(__file__))
+PATH_BENIGNO = os.path.join(diretorio_base, "csv_benigno_amostra")
+PATH_MALIGNO = os.path.join(diretorio_base, "csv_exfiltracao")
 
-
-PATH_TEMP = os.path.join(BASE_PATH, "arquivos_rotulados")
+PATH_TEMP = os.path.join(diretorio_base, "arquivos_rotulados")
 os.makedirs(PATH_TEMP, exist_ok=True)
 
-ARQUIVO_FINAL = os.path.join(BASE_PATH, "dataset_final.csv")
+ARQUIVO_FINAL = os.path.join(diretorio_base, "dataset_final.csv")
 
 def limpar_e_salvar_separado(caminho_arquivo, label):
     nome_original = os.path.basename(caminho_arquivo)

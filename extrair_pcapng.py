@@ -7,17 +7,18 @@ from collections import Counter
 
 # --- CONFIGURAÇÕES ---
 
+diretorio_base = os.path.dirname(os.path.abspath(__file__))
+
 # Benigno
-pasta_pcap = "/mnt/c/Faculdade/TCC/pcap_benigno"
-pasta_csv = "/mnt/c/Faculdade/TCC/csv_benigno"
+pasta_pcap = os.path.join(diretorio_base, "pcap_benigno")
+pasta_csv = os.path.join(diretorio_base, "csv_benigno")
 
 # Exfiltração
-# pasta_pcap = "/mnt/c/Faculdade/TCC/pcap_exfiltracao"
-# pasta_csv = "/mnt/c/Faculdade/TCC/csv_exfiltracao"
+# pasta_pcap = os.path.join(diretorio_base, "pcap_exfiltracao")
+# pasta_csv = os.path.join(diretorio_base, "csv_exfiltracao")
 
 os.makedirs(pasta_csv, exist_ok=True)
 
-# LISTA DE ATRIBUTOS
 FEATURES_FIXAS = [
     # Identificadores
     "src_ip", "dst_ip", "src_port", "dst_port", "protocol", 
@@ -76,9 +77,7 @@ for f in os.listdir(pasta_csv):
 for nome_arquivo in os.listdir(pasta_pcap):
     if nome_arquivo.endswith(".pcapng") or nome_arquivo.endswith(".pcap"): # Aceita .pcap tb
         caminho_pcap = os.path.join(pasta_pcap, nome_arquivo)
-        tamanho_arq = os.path.getsize(caminho_pcap)
-        
-        if tamanho_arq == 0: continue
+        if os.path.getsize(caminho_pcap) == 0: continue
             
         print(f"Processando: {nome_arquivo}...")
 
